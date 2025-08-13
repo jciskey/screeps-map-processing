@@ -1,0 +1,25 @@
+[package]
+name = "screeps-map-processing"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+rle = "0.2.0"
+rusqlite = { version = "0.37.0", features = ["bundled", "serialize"] }
+screeps-game-api = { path = "../screeps-game-api" }
+screeps-game-utils = { path = "../screeps-game-utils" }
+
+
+[[bin]]
+name = "process-mmo-map-terrain"
+
+[dev-dependencies]
+itertools = "0.14.0"
+criterion = "0.6"
+indicatif = "0.18.0"
+rayon = "1.10.0"
+rand = "0.9.2"
+
+[[bench]]
+name = "get_xy_comparison"
+harness = false
