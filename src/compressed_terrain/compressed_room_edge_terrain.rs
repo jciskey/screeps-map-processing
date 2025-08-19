@@ -1,5 +1,5 @@
 use std::mem::size_of;
-use screeps::{Terrain, RoomXY, ROOM_USIZE};
+use screeps::{Terrain, RoomXY, RoomName, ROOM_USIZE};
 
 // The naive encoding is to take the tiles from 1 to 48 and encode them using a single bit each.
 // The corners of the room are always Walls, so we can ignore those for the actual data storage.
@@ -234,6 +234,74 @@ impl RoomEdgeTerrain {
                 Self::get_tile_terrain_from_chunk(byte_slice, edge_offset)
             }
         }
+    }
+
+    /// Returns true if the top edge has any exits, false if it has no exits.
+    ///
+    /// This is more efficient than calculating the exits, if you just need to do a connectivity
+    /// check instead of working with the exits.
+    pub fn top_edge_has_exits(&self) -> bool {
+        for byte in self.get_top_edge_bytes_slice() {
+            // If any byte in the top edge bytes has any zero bits set, that means it has at
+            // least one Plains tile, and thus has an exit.
+            if *byte < u8::MAX {
+                return true;
+            }
+        }
+
+        // If we get here, we know that no zero bits were set, and we can return false
+        false
+    }
+
+    /// Returns true if the right edge has any exits, false if it has no exits.
+    ///
+    /// This is more efficient than calculating the exits, if you just need to do a connectivity
+    /// check instead of working with the exits.
+    pub fn right_edge_has_exits(&self) -> bool {
+        for byte in self.get_right_edge_bytes_slice() {
+            // If any byte in the right edge bytes has any zero bits set, that means it has at
+            // least one Plains tile, and thus has an exit.
+            if *byte < u8::MAX {
+                return true;
+            }
+        }
+
+        // If we get here, we know that no zero bits were set, and we can return false
+        false
+    }
+
+    /// Returns true if the bottom edge has any exits, false if it has no exits.
+    ///
+    /// This is more efficient than calculating the exits, if you just need to do a connectivity
+    /// check instead of working with the exits.
+    pub fn bottom_edge_has_exits(&self) -> bool {
+        for byte in self.get_bottom_edge_bytes_slice() {
+            // If any byte in the bottom edge bytes has any zero bits set, that means it has at
+            // least one Plains tile, and thus has an exit.
+            if *byte < u8::MAX {
+                return true;
+            }
+        }
+
+        // If we get here, we know that no zero bits were set, and we can return false
+        false
+    }
+
+    /// Returns true if the left edge has any exits, false if it has no exits.
+    ///
+    /// This is more efficient than calculating the exits, if you just need to do a connectivity
+    /// check instead of working with the exits.
+    pub fn left_edge_has_exits(&self) -> bool {
+        for byte in self.get_left_edge_bytes_slice() {
+            // If any byte in the left edge bytes has any zero bits set, that means it has at
+            // least one Plains tile, and thus has an exit.
+            if *byte < u8::MAX {
+                return true;
+            }
+        }
+
+        // If we get here, we know that no zero bits were set, and we can return false
+        false
     }
 
     /// The amount of memory that it takes to hold this data.
@@ -493,5 +561,41 @@ mod test {
                 }
             }
         }
+    }
+
+    #[test]
+    pub fn room_edge_terrain_edge_has_exits_returns_false_with_no_exits() {
+        let edge = [Terrain::Wall; 50];
+        let terrain = RoomEdgeTerrain::new_from_terrain_slices(&edge, &edge, &edge, &edge).unwrap();
+
+        let top_has_exits = terrain.top_edge_has_exits();
+        assert_eq!(top_has_exits, false, "Top edge reports exits when none exist");
+
+        let right_has_exits = terrain.right_edge_has_exits();
+        assert_eq!(right_has_exits, false, "Right edge reports exits when none exist");
+
+        let bottom_has_exits = terrain.bottom_edge_has_exits();
+        assert_eq!(bottom_has_exits, false, "Bottom edge reports exits when none exist");
+
+        let left_has_exits = terrain.left_edge_has_exits();
+        assert_eq!(left_has_exits, false, "Left edge reports exits when none exist");
+    }
+
+    #[test]
+    pub fn room_edge_terrain_edge_has_exits_returns_true_with_exits() {
+        let edge = [Terrain::Plain; 50];
+        let terrain = RoomEdgeTerrain::new_from_terrain_slices(&edge, &edge, &edge, &edge).unwrap();
+
+        let top_has_exits = terrain.top_edge_has_exits();
+        assert_eq!(top_has_exits, true, "Top edge reports no exits when some exist");
+
+        let right_has_exits = terrain.right_edge_has_exits();
+        assert_eq!(right_has_exits, true, "Right edge reports no exits when some exist");
+
+        let bottom_has_exits = terrain.bottom_edge_has_exits();
+        assert_eq!(bottom_has_exits, true, "Bottom edge reports no exits when some exist");
+
+        let left_has_exits = terrain.left_edge_has_exits();
+        assert_eq!(left_has_exits, true, "Left edge reports no exits when some exist");
     }
 }
