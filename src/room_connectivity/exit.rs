@@ -187,6 +187,7 @@ impl RoomExit {
 }
 
 /// Compactly stores information about all the exits in a room.
+#[derive(Debug, Clone, Copy)]
 pub struct RoomExitsData {
     /// Unfortunately, there really isn't any way to store this better than just 24 raw bytes of
     /// compressed edge data.
@@ -267,6 +268,13 @@ impl RoomExitsData {
     /// This is more efficient than constructing all of the exits, if you just need the exit count.
     pub fn num_left_exits(&self) -> usize {
         self.num_left_exits
+    }
+
+    /// The total number of exits along all edges of the room.
+    ///
+    /// This is more efficient than constructing all of the exits, if you just need the exit count.
+    pub fn num_exits(&self) -> usize {
+        self.num_top_exits + self.num_right_exits + self.num_bottom_exits + self.num_left_exits
     }
 
     /// A reference to the underlying edge terrain data for the room.
@@ -434,6 +442,41 @@ impl RoomExitsData {
     /// The room this data is for.
     pub fn room(&self) -> RoomName {
         self.room
+    }
+
+    /// Returns an iterator over all the exits in the room.
+    pub fn iter(&self) -> RoomExitsIter {
+        RoomExitsIter::new(*self)
+    }
+}
+
+pub struct RoomExitsIter {
+    data: RoomExitsData,
+    current_index: usize,
+    length: usize,
+}
+
+impl RoomExitsIter {
+    fn new(data: RoomExitsData) -> Self {
+        Self {
+            data,
+            current_index: 0,
+            length: data.num_exits(),
+        }
+    }
+}
+
+impl Iterator for RoomExitsIter {
+    type Item = RoomExit;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.current_index >= self.length {
+            None
+        } else {
+            let exit = self.data.get_exit_by_index(self.current_index);
+            self.current_index += 1;
+            exit
+        }
     }
 }
 
