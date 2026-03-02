@@ -1,5 +1,5 @@
 use std::mem::size_of;
-use screeps::{Terrain, RoomXY, RoomName, ROOM_USIZE};
+use screeps::{LocalRoomTerrain, Terrain, RoomXY, RoomName, ROOM_USIZE};
 use crate::compressed_terrain::compressed_terrain::CompressedRoomTerrain;
 
 // The naive encoding is to take the tiles from 1 to 48 and encode them using a single bit each.
@@ -16,6 +16,9 @@ pub enum RoomEdgeTerrainParseError {
 }
 
 /// Stores room edge terrain data compressed via bit-packing.
+///
+/// Internally, the data is stored as 24 bytes. To store all of the room edges on shard 3,
+/// which has 14884 rooms, you would need `24 * 14884 = 357216` bytes, or `348.84` kilobytes.
 #[derive(Debug, Copy, Clone)]
 pub struct RoomEdgeTerrain {
     data: [u8; 24],
@@ -69,6 +72,64 @@ impl RoomEdgeTerrain {
         Ok(Self { data })
     }
 
+    /// Creates a new RoomEdgeTerrain from uncompressed terrain data.
+    pub fn new_from_local_room_terrain(terrain: &LocalRoomTerrain) -> Self {
+        // Extract the edges
+        let mut top_edge_terrain: Vec<Terrain> = Vec::new();
+        let mut right_edge_terrain: Vec<Terrain> = Vec::new();
+        let mut bottom_edge_terrain: Vec<Terrain> = Vec::new();
+        let mut left_edge_terrain: Vec<Terrain> = Vec::new();
+        
+        // -- Top edge
+        for x in 0..50 {
+            let y = 0;
+            let xy = unsafe { RoomXY::unchecked_new(x, y) };
+            top_edge_terrain.push(terrain.get_xy(xy));
+        }
+
+        // -- Right edge
+        for y in 0..50 {
+            let x = 49;
+            let xy = unsafe { RoomXY::unchecked_new(x, y) };
+            right_edge_terrain.push(terrain.get_xy(xy));
+        }
+
+        // -- Bottom edge
+        for x in 0..50 {
+            let y = 49;
+            let xy = unsafe { RoomXY::unchecked_new(x, y) };
+            bottom_edge_terrain.push(terrain.get_xy(xy));
+        }
+
+        // -- Left edge
+        for y in 0..50 {
+            let x = 0;
+            let xy = unsafe { RoomXY::unchecked_new(x, y) };
+            left_edge_terrain.push(terrain.get_xy(xy));
+        }
+
+        let top: &[Terrain] = &top_edge_terrain;
+        let right: &[Terrain] = &right_edge_terrain;
+        let bottom: &[Terrain] = &bottom_edge_terrain;
+        let left: &[Terrain] = &left_edge_terrain;
+        let top_slice = top.try_into().expect("should always be length 50");
+        let right_slice = right.try_into().expect("should always be length 50");
+        let bottom_slice = bottom.try_into().expect("should always be length 50");
+        let left_slice = left.try_into().expect("should always be length 50");
+
+        // Convert them into bytes
+        // Return the edge terrain struct
+        let mut data = [0u8; 24];
+        let (chunks, _) = data.as_chunks_mut::<6>();
+
+        for (mut bytes, slice) in chunks.into_iter().zip([top_slice, right_slice, bottom_slice, left_slice]) {
+            RoomEdgeTerrain::copy_edge_terrain_to_byte_slice(slice, &mut bytes);
+        }
+
+        Self { data }
+    }
+
+    /// Creates a new RoomEdgeTerrain from compressed terrain data.
     pub fn new_from_compressed_room_terrain(terrain: &CompressedRoomTerrain) -> Self {
         // Extract the edges
         let mut top_edge_terrain: Vec<Terrain> = Vec::new();
