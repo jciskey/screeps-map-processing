@@ -9,6 +9,7 @@ include = [
     "CHANGELOG.md",
     "README.md",
     "LICENSE",
+    "!src/bin/process-mmo-map-terrain/data/*",
 ]
 license = "MIT"
 readme = "README.md"
