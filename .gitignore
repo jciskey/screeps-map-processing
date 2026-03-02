@@ -1,3 +1,4 @@
 /target
 /src/bin/process-mmo-map-terrain/data
 *.swp
+Cargo.lock
