@@ -2,12 +2,33 @@
 name = "screeps-map-processing"
 version = "0.1.0"
 edition = "2024"
+authors = ["Joe Ciskey"]
+include = [
+    "Cargo.toml",
+    "src/**/*",
+    "CHANGELOG.md",
+    "README.md",
+    "LICENSE",
+]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/jciskey/screeps-map-processing/"
+documentation = "https://docs.rs/screeps-map-processing/"
+description = "Map processing algorithms and data storage structures for Screeps: World in native Rust"
+
+[lib]
+name = "screeps_map_processing"
+
+[package.metadata.docs.rs]
+all-features = true
 
 [dependencies]
 rle = "0.2.0"
 rusqlite = { version = "0.37.0", features = ["bundled", "serialize"] }
-screeps-game-api = { path = "../screeps-game-api" }
-screeps-game-utils = { path = "../screeps-game-utils" }
+#screeps-game-api = { path = "../screeps-game-api" }
+#screeps-game-utils = { path = "../screeps-game-utils" }
+screeps-game-api = "0.23.1"
+screeps-game-utils = "0.23.0"
 
 
 [[bin]]
